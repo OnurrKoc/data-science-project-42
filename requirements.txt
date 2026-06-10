@@ -1,0 +1,5 @@
+pytest
+spacy
+numpy
+watchdog
+requests
