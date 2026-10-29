@@ -16,7 +16,29 @@ hepsi geçene kadar iterate et:
 
 NOT: spaCy modeli (`en_core_web_sm`) zaten kurulu. Harici indirme YOK.
 """
+from collections import Counter
+import spacy
 
+NEWS_TEXTS = [
+    "Apple is looking at buying a U.K. startup for $1 billion.",
+    "Tim Cook announced the new iPhone in California on Monday.",
+    "Barack Obama was born in Hawaii and served as President of the United States.",
+    "Microsoft acquired GitHub for $7.5 billion in 2018.",
+    "Elon Musk founded SpaceX and now leads Tesla in Texas.",
+    "Google opened a new office in London last year.",
+    "Amazon reported $100 billion in revenue during the fourth quarter.",
+    "Angela Merkel met with Emmanuel Macron in Paris on Tuesday.",
+    "Facebook changed its name to Meta in October 2021.",
+    "Joe Biden visited Japan and South Korea this week.",
+    "Netflix lost subscribers in the United States during 2022.",
+    "Jeff Bezos stepped down as Amazon chief executive in July.",
+    "The European Union fined Google nearly $5 billion in 2018.",
+    "Cristiano Ronaldo signed with a club in Saudi Arabia for $200 million.",
+    "IBM and Apple partnered on enterprise software in New York.",
+    "Toyota plans to build a factory in Mexico next year.",
+    "Sundar Pichai spoke at a Google event in San Francisco yesterday.",
+    "Google announced a new artificial intelligence model in Mountain View on Friday.",
+]
 
 # 1. Veriyi yükle — koda gömülü metin listesi
 def load_texts():
@@ -37,8 +59,7 @@ def load_texts():
         "Tim Cook announced the new iPhone in California on Monday."
         "Google opened a new office in London last year."
     """
-    # TODO: koda gömülü haber cümlelerini döndür
-    raise NotImplementedError
+    return list(NEWS_TEXTS)
 
 
 # 2. spaCy modelini yükle
@@ -54,8 +75,7 @@ def build_nlp():
     - import spacy
     - return spacy.load("en_core_web_sm")
     """
-    # TODO: spacy.load ile modeli yükle
-    raise NotImplementedError
+    return spacy.load("en_core_web_sm")
 
 
 # 3. Tek metinden varlık çıkar
@@ -77,8 +97,8 @@ def extract_entities(nlp, text):
     - Her varlık için ent.text (varlık metni) ve ent.label_ (tür) kullan
     - [(ent.text, ent.label_) for ent in doc.ents]
     """
-    # TODO: nlp(text).ents üzerinden (text, label) tuple listesi üret
-    raise NotImplementedError
+    doc = nlp(text)
+    return [(ent.text, ent.label_) for ent in doc.ents]
 
 
 # 4. Label bazında sayım
@@ -99,8 +119,11 @@ def count_by_label(nlp, texts):
       counter[label] += 1
     - dict(counter) döndür
     """
-    # TODO: tüm metinlerde label sayımı yap, dict döndür
-    raise NotImplementedError
+    counter = Counter()
+    for text in texts:
+        for _ent_text, label in extract_entities(nlp, text):
+            counter[label] += 1
+    return dict(counter)
 
 
 # 5. Belirli bir label için en sık geçen n varlık
@@ -125,8 +148,12 @@ def top_entities(nlp, texts, label, n=5):
       varlıkları say: counter[ent_text] += 1
     - return counter.most_common(n)
     """
-    # TODO: label'a göre varlıkları say, most_common(n) döndür
-    raise NotImplementedError
+    counter = Counter()
+    for text in texts:
+        for ent_text, ent_label in extract_entities(nlp, text):
+            if ent_label == label:
+                counter[ent_text] += 1
+    return counter.most_common(n)
 
 
 # 6. Varlık listesini label'a göre filtrele
@@ -144,8 +171,8 @@ def filter_by_label(entities, label):
     İpucu:
     - [(t, l) for (t, l) in entities if l == label]
     """
-    # TODO: entities listesini label'a göre filtrele
-    raise NotImplementedError
+    return [(ent_text, ent_label) for ent_text, ent_label in entities
+            if ent_label == label]
 
 
 # 7. En sık geçen ORG (kuruluş)
@@ -165,8 +192,10 @@ def most_common_org(nlp, texts):
     - top_entities(nlp, texts, "ORG", n=1) → [("Google", 3)]
     - Liste boşsa None, değilse ilk tuple'ın ilk elemanını döndür.
     """
-    # TODO: top_entities ile en sık ORG'u bul, sadece adını döndür
-    raise NotImplementedError
+    orgs = top_entities(nlp, texts, "ORG", n=1)
+    if not orgs:
+        return None
+    return orgs[0][0]
 
 
 # 8. Uçtan uca akış
@@ -187,8 +216,19 @@ def run_pipeline():
             'most_common_org': str
         }
     """
-    # TODO: yukarıdaki fonksiyonları sırayla çağırıp özet dict döndür
-    raise NotImplementedError
+    texts = load_texts()
+    nlp = build_nlp()
+
+    label_counts = count_by_label(nlp, texts)
+    top_persons = top_entities(nlp, texts, "PERSON", n=3)
+    top_org = most_common_org(nlp, texts)
+
+    return {
+        "total_texts": len(texts),
+        "label_counts": label_counts,
+        "top_persons": top_persons,
+        "most_common_org": top_org,
+    }
 
 
 if __name__ == "__main__":
